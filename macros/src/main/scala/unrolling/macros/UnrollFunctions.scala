@@ -1,7 +1,7 @@
 package unrolling.macros
 
 import scala.language.experimental.macros
-import scala.reflect.macros.Context
+import scala.reflect.macros.blackbox
 
 /**
  *
@@ -13,7 +13,7 @@ object UnrollFunctions {
 
   def unroll(f: () => Unit): Unit = macro unroll_impl
 
-  def unroll_impl(c: Context)(f: c.Tree): c.Tree = logIt { log =>
+  def unroll_impl(c: blackbox.Context)(f: c.Tree): c.Tree = logIt { log =>
     import c.universe._
     def println(a: Any) = log.println(a)
 
