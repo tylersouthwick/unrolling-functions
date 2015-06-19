@@ -9,6 +9,7 @@ import scala.reflect.macros.Context
 object UnrollFunctions {
 
   def leaf(f: () => Unit): Unit = f()
+  def branch(f: () => Unit): Unit = f()
 
   def unroll(f: () => Unit): Unit = macro unroll_impl
 
@@ -40,11 +41,23 @@ object UnrollFunctions {
     } yield {
         val otherLeaves = leaves.filterNot(_.equalsStructure(leaf))
         object leafRemover extends Transformer {
+          var found = false
           override def transform(tree: c.universe.Tree): c.universe.Tree = {
-            if (otherLeaves.exists(_.equalsStructure(tree))) {
+            if (tree == leaf) {
+              found = true
+              leaf
+            } else if (otherLeaves.exists(_.equalsStructure(tree))) {
               c.typecheck(reify(null).tree)
             } else {
-              super.transform(tree)
+              tree match {
+                case app@Apply(fun, args) =>
+                  if (found && "unrolling.macros.UnrollFunctions.branch".equals(fun.toString())) {
+                    c.typecheck(reify(null).tree)
+                  } else {
+                    super.transform(tree)
+                  }
+                case _ => super.transform(tree)
+              }
             }
           }
         }

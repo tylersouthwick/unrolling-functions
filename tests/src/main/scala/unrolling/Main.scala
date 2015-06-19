@@ -13,8 +13,15 @@ object Main {
       leaf { () =>
         println("hello world2")
       }
-      leaf { () =>
-        println("hello world3")
+      branch { () =>
+        println("Branch 1 start")
+        leaf { () =>
+          println("hello world3")
+        }
+        leaf { () =>
+          println("hello world4")
+        }
+        println("Branch 1 end2")
       }
       println("done")
     }
