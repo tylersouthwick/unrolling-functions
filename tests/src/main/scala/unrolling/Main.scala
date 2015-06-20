@@ -7,19 +7,30 @@ object Main {
 
   import unrolling.macros.UnrollFunctions._
 
+  def register(f : () => Unit): Unit = {
+    println("registering: " + f.toString)
+    println("invoke")
+    f.apply()
+    println("end invoke")
+  }
+
   def main(args : Array[String]) : Unit = {
-    unroll { () =>
+    unroll(register) {
       println("hello world1")
-      leaf { () =>
+      leaf {
         println("hello world2")
       }
-      branch { () =>
+      branch {
         println("Branch 1 start")
-        leaf { () =>
+        leaf {
           println("hello world3")
         }
-        leaf { () =>
-          println("hello world4")
+        branch {
+          println("Branch 2 stat")
+          leaf {
+            println("hello world4")
+          }
+          println("Branch 2 end")
         }
         println("Branch 1 end2")
       }

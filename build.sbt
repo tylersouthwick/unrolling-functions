@@ -11,7 +11,8 @@ lazy val macros = (project in file("macros")).
 lazy val tests = (project in file("tests")).
   settings(commonSettings : _*).
   settings(
-    name := "UnrollingFunctions-tests"
+    name := "UnrollingFunctions-tests",
+    libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.4" % "test"
   ).
   dependsOn(macros)
 
