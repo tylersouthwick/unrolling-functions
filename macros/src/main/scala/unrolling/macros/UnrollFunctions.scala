@@ -1,6 +1,5 @@
 package unrolling.macros
 
-import scala.collection.mutable.ListBuffer
 import scala.language.experimental.macros
 import scala.reflect.macros.blackbox
 
@@ -14,9 +13,8 @@ object UnrollFunctions {
 
   def unroll(target : (Seq[String], () => Unit) => Unit)(f: => Unit): Unit = macro unroll_impl
 
-  def unroll_impl(c: blackbox.Context)(target : c.Tree) (f: c.Tree): c.Tree = logIt { log =>
+  def unroll_impl(c: blackbox.Context)(target : c.Tree) (f: c.Tree): c.Tree = {
     import c.universe._
-    def println(a: Any) = log.println(a)
 
     implicit class LeafBranchFinder(tree : Tree) {
       def isBranch = tree.toString().startsWith("unrolling.macros.UnrollFunctions.branch(")
@@ -25,11 +23,12 @@ object UnrollFunctions {
 
     val leaves = {
       object nameFinder extends Traverser {
-        var applies = List[Tree]()
+        var applies = List[Apply]()
 
         override def traverse(tree: Tree): Unit = tree match {
           case app@Apply(fun, args) =>
             if (fun.isLeaf) {
+              c.info(fun.pos, "Found leaf", force = false)
               applies = app :: applies
             } /*else {
               println("found fun: " + fun.toString() + " [" + showRaw(fun) + "]")
@@ -54,6 +53,7 @@ object UnrollFunctions {
         object leafRemover extends Transformer {
           override def transform(tree: c.universe.Tree): c.universe.Tree = {
             if (otherLeaves.exists(_.equalsStructure(tree))) {
+              c.info(tree.pos, "Removing leaf from tree " + leaf.fun, force = false)
               c.typecheck(reify(null).tree)
             } else {
               super.transform(tree)
@@ -77,11 +77,8 @@ object UnrollFunctions {
             if (tree.isBranch) {
               tree match {
                 case app@Apply(Apply(_, _), _) if !app.exists(_.isLeaf)=> {
-                    //println("tree [" + tree + "] has leaf: " + tree.exists(_.isLeaf))
-                    //println("removing tree: " + app + " -> " + app.getClass)
-                    //println("removing tree: " + app.fun + " -> " + app.fun.getClass)
-                    c.typecheck(reify(null).tree)
-                    //tree
+                  c.info(app.pos, "Removing branch as it does not apply to leaf: " + leaf.asInstanceOf[Apply].fun, force = false)
+                  c.typecheck(reify(null).tree)
                 }
                 case _ => super.transform(tree)
               }
@@ -122,19 +119,6 @@ object UnrollFunctions {
     val applyFun = r.head
     //println("applyFun: " + applyFun)
     Block(paths.map(path => Apply(applyFun, List(q"${path._2}", Function(List(), path._1)))), Literal(Constant()))
-  }
-
-  import java.io._
-
-  def logIt[A](f: PrintWriter => A): A = {
-    val out = new PrintWriter(new OutputStreamWriter(new FileOutputStream("/tmp/macro_dev", true)))
-    try {
-      out.println("\n" * 55)
-      out.println("generated: " + new java.util.Date)
-      f(out)
-    } finally {
-      out.close()
-    }
   }
 
 }

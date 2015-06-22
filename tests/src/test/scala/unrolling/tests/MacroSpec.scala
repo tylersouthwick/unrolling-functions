@@ -13,7 +13,6 @@ class MacroSpec extends FunSpec with ShouldMatchers {
     case class RegisteredTest(args : Seq[String], f : () => Unit)
     val buffer = ListBuffer[RegisteredTest]()
     def testRegistration(args : Seq[String], f : () => Unit): Unit = {
-      println("found args: " + args)
       buffer += RegisteredTest(args, f)
     }
 
@@ -38,7 +37,6 @@ class MacroSpec extends FunSpec with ShouldMatchers {
         }
       }
       branch("branch3") {
-        println("branch3")
         counter += 2
         leaf("leaf6") {
           counter += 33
