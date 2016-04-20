@@ -6,10 +6,13 @@ import scala.reflect.macros.blackbox
 /**
  *
  */
+case object Leaf {
+  def apply(note : String)(f : => Unit) : Unit = f
+}
+case object Branch {
+  def apply(note: String)(f: => Unit): Unit = f
+}
 object UnrollFunctions {
-
-  def leaf(note : String)(f: => Unit): Unit = f
-  def branch(note : String)(f: => Unit): Unit = f
 
   def unroll(target : (Seq[String], () => Unit) => Unit)(f: => Unit): Unit = macro unroll_impl
 
@@ -18,7 +21,11 @@ object UnrollFunctions {
 
     implicit class LeafBranchFinder(tree : Tree) {
       def isBranch = tree.toString().startsWith("unrolling.macros.UnrollFunctions.branch(")
-      def isLeaf = tree.toString().startsWith("unrolling.macros.UnrollFunctions.leaf(")
+      def isLeaf = {
+        println("possible leaf: " + tree.toString() + " -> " + tree.tpe)
+        println(showRaw(tree))
+        tree.toString().startsWith("unrolling.macros.UnrollFunctions.leaf(")
+      }
     }
 
     val leaves = {
@@ -35,6 +42,8 @@ object UnrollFunctions {
             }*/
             super.traverse(fun)
             super.traverseTrees(args)
+          case Select(Select(This(TypeName("MacroSpec")), TermName("leaf"))) =>
+            println("found leaf?")
           case _ => {
             //println("found: " + tree.toString() + " [" + showRaw(tree) + "]")
             super.traverse(tree)

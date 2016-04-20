@@ -1,10 +1,14 @@
 package unrolling.tests
 
 import org.scalatest.{ShouldMatchers, FunSpec}
+import unrolling.macros.{Branch, Leaf}
 
 import scala.collection.mutable.ListBuffer
 
 class MacroSpec extends FunSpec with ShouldMatchers {
+
+  val leaf = Leaf
+  val branch = Branch
 
   describe("unroll") {
 
@@ -13,6 +17,7 @@ class MacroSpec extends FunSpec with ShouldMatchers {
     case class RegisteredTest(args : Seq[String], f : () => Unit)
     val buffer = ListBuffer[RegisteredTest]()
     def testRegistration(args : Seq[String], f : () => Unit): Unit = {
+      println("registering test function: " + args)
       buffer += RegisteredTest(args, f)
     }
 
